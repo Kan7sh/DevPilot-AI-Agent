@@ -11,7 +11,7 @@ class Agent:
     def __init__(self,config:Config):
         self.config = config
         self.client =  LLMClient(config=self.config)
-        self.context_manager =  ContextManager()
+        self.context_manager =  ContextManager(config=self.config)
         self.tool_registry = create_default_registry()
 
     async def run(self, message:str):
@@ -75,7 +75,7 @@ class Agent:
             result = await self.tool_registry.invoke(
                   tool_call.name,
                   tool_call.arguments,
-                  Path.cwd()
+                  self.config.cwd
              )
             
             yield AgentEvent.tool_call_complete(

@@ -65,6 +65,7 @@ def load_config(cwd:Path|None)->Config:
 
     system_path = get_system_config_path()
     config_dict:dict[str,Any] = {}
+    print("SystemPath",system_path)
     if system_path.is_file():
         try:
             config_dict = _parse_toml(system_path)

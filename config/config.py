@@ -12,7 +12,6 @@ class Config(BaseModel):
     model : ModelConfig =  Field(default_factory=ModelConfig)
     cwd:Path = Field(default_factory=Path.cwd)
     max_turns:int = 100
-    max_tool_output_tokens:int = 50_000
     developer_instructions:str|None = None
     user_instructions:str|None = None
     debug:bool = False
@@ -20,7 +19,7 @@ class Config(BaseModel):
     @property
     def api_key(self)->str|None:
         return os.environ.get("API_KEY")
-    
+
     @property
     def base_url(self)->str:
         return os.environ.get("BASE_URL")
