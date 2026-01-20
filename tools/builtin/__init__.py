@@ -1,3 +1,4 @@
+from tools.builtin.edit_tool import EditTool
 from tools.builtin.read_file import ReadFileTool
 from tools.builtin.write_file import WriteFileTool
 __all__=[
@@ -5,4 +6,8 @@ __all__=[
 ]
 
 def get_all_builtin_tools()->list[type]:
-    return [ReadFileTool,WriteFileTool]
+    return [
+        ReadFileTool,
+        WriteFileTool,
+        EditTool
+        ]
