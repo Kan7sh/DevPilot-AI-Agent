@@ -101,7 +101,8 @@ class CLI:
                     event.data.get("error"),
                     event.data.get("metadata"),
                     event.data.get("diff"),
-                    event.data.get("truncated",False)
+                    event.data.get("truncated",False),
+                    event.data.get("exit_code"),
                 )
 
 
