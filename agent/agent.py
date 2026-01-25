@@ -99,6 +99,7 @@ class Agent:
                 )
             
     async def __aenter__(self)->Agent:
+            await self.session.initialize()
             return self
         
     async def __aexit__(self,exp_val,exp_type,exp_tb)->None:

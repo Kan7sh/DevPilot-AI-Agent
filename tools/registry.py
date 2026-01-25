@@ -44,6 +44,17 @@ class ToolRegistry:
 
         return tools
 
+    def register_mcp_tool(self, tool: Tool) -> None:
+        self._mcp_tools[tool.name] = tool
+        logger.debug(f"Registered MCP tool: {tool.name}")
+
+    def get(self, name: str) -> Tool | None:
+        if name in self._tools:
+            return self._tools[name]
+        elif name in self._mcp_tools:
+            return self._mcp_tools[name]
+
+        return None
     
     def get_schema(self)->list[dict[str,Any]]:
         return [tool.to_openai_schema() for tool in self.get_tools()]

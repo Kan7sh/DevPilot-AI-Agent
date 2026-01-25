@@ -1,2 +1,10 @@
 [model]
 temperature = 0
+
+[mcp_servers.filesystem]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem", "C:\Users\kchha\Chosen one folder\Projects\ClaudeCode", "/tmp"]
+
+[mcp_servers.filesystem2]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem222222222222", "/Users/rivaanranawat/Desktop/ai-agent", "/tmp"]
