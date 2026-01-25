@@ -29,6 +29,17 @@ class Agent:
         for turn in range(max_turns):
             self.session.increment_turn()
             response_text = ""
+
+            if self.session.context_manager.needs_compression():
+                summary, usage = await self.session.chat_compactor.compress(
+                    self.session.context_manager
+                )
+
+                if summary:
+                    self.session.context_manager.replace_with_summary(summary)
+                    self.session.context_manager.set_latest_usage(usage)
+                    self.session.context_manager.add_usage(usage)
+
             tool_schemas = self.session.tool_registry.get_schema()
             tool_calls:list[ToolCall] = []
 
@@ -43,6 +54,8 @@ class Agent:
                         tool_calls.append(event.tool_call)
                 elif event.type == StreamEventType.ERROR:
                     yield AgentEvent.agent_error(event.error or "Unknown error occured.")
+                elif event.type == StreamEventType.MESSAGE_COMPLETE:
+                    usage = event.usage
 
             
             self.session.context_manager.add_assistant_message(
