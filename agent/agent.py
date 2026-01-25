@@ -43,6 +43,7 @@ class Agent:
                         tool_calls.append(event.tool_call)
                 elif event.type == StreamEventType.ERROR:
                     yield AgentEvent.agent_error(event.error or "Unknown error occured.")
+
             
             self.session.context_manager.add_assistant_message(
                 response_text or None,
@@ -52,17 +53,15 @@ class Agent:
                         "type":"function",
                         "function":{
                             "name":tc.name,
-                            "arguments":str(tc.arguments)
+                            "arguments":tc.arguments
                         }
                     }
                     for tc in tool_calls
                 ] if tool_calls else None
             )
 
-            if response_text:
-                yield AgentEvent.text_complete(response_text)
-
             if not tool_calls:
+                yield AgentEvent.text_complete(response_text)
                 return
             
             tool_call_results:list[ToolResultMessage] = []
