@@ -8,15 +8,17 @@ from utils.paths import is_binary_file, resolve_path
 
 
 class GlobParams(BaseModel):
-    pattern: str = Field(..., description="Glob pattern to match.")
+    pattern: str = Field(..., description="Glob pattern to match")
     path: str = Field(
-        ".", description="FDirectory to search in (default: current directory)"
+        ".", description="Directory to search in (default: current directory)"
     )
 
 
 class GlobTool(Tool):
     name = "glob"
-    description = "Find files matchinng a glob pattern. Supports ** for recursive matching."
+    description = (
+        "Find files matching a glob pattern. Supports ** for recursive matching."
+    )
     kind = ToolKind.READ
     schema = GlobParams
 
@@ -31,7 +33,7 @@ class GlobTool(Tool):
         try:
             matches = list(search_path.glob(params.pattern))
             matches = [p for p in matches if p.is_file()]
-        except re.error as e:
+        except Exception as e:
             return ToolResult.error_result(f"Error searching: {e}")
 
         output_lines = []
@@ -42,9 +44,11 @@ class GlobTool(Tool):
             except Exception:
                 rel_path = file_path
 
-            output_lines.append(f"{rel_path}")
+            output_lines.append(str(rel_path))
+
         if len(matches) > 1000:
-            output_lines.append(f"... (limited to 1000 results).")
+            output_lines.append(f"...(limited to 1000 results)")
+
         return ToolResult.success_result(
             "\n".join(output_lines),
             metadata={

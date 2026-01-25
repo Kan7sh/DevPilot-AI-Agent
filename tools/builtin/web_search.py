@@ -1,76 +1,60 @@
-import os
-from pathlib import Path
-import re
 from tools.base import Tool, ToolInvocation, ToolKind, ToolResult
 from pydantic import BaseModel, Field
+from ddgs import DDGS
 
-from utils.paths import is_binary_file, resolve_path
 
-
-class GlobParams(BaseModel):
-    pattern: str = Field(..., description="Glob pattern to match.")
-    path: str = Field(
-        ".", description="FDirectory to search in (default: current directory)"
+class WebSearchParams(BaseModel):
+    query: str = Field(..., description="Search query")
+    max_results: int = Field(
+        10,
+        ge=1,
+        le=20,
+        description="Maximum results to return (default: 10)",
     )
 
 
-class GlobTool(Tool):
-    name = "glob"
-    description = "Find files matchinng a glob pattern. Supports ** for recursive matching."
-    kind = ToolKind.READ
-    schema = GlobParams
+class WebSearchTool(Tool):
+    name = "web_search"
+    description = "Search the web for information. Returns search results with titles, URLs and snippets"
+    kind = ToolKind.NETWORK
+    schema = WebSearchParams
 
     async def execute(self, invocation: ToolInvocation) -> ToolResult:
-        params = GlobParams(**invocation.params)
-
-        search_path = resolve_path(invocation.cwd, params.path)
-
-        if not search_path.exists() or not search_path.is_dir():
-            return ToolResult.error_result(f"Directory does not exist: {search_path}")
+        params = WebSearchParams(**invocation.params)
 
         try:
-            matches = list(search_path.glob(params.pattern))
-            matches = [p for p in matches if p.is_file()]
-        except re.error as e:
-            return ToolResult.error_result(f"Error searching: {e}")
+            results = DDGS().text(
+                params.query,
+                region="us-en",
+                safesearch="off",
+                timelimit="y",
+                page=1,
+                backend="auto",
+            )
+        except Exception as e:
+            return ToolResult.error_result(f"Search failed: {e}")
 
-        output_lines = []
+        if not results:
+            return ToolResult.success_result(
+                f"No results found for: {params.query}",
+                metadata={
+                    "results": 0,
+                },
+            )
 
-        for file_path in matches[:1000]:
-            try:
-                rel_path = file_path.relative_to(invocation.cwd)
-            except Exception:
-                rel_path = file_path
+        output_lines = [f"Search results for: {params.query}"]
 
-            output_lines.append(f"{rel_path}")
-        if len(matches) > 1000:
-            output_lines.append(f"... (limited to 1000 results).")
+        for i, result in enumerate(results, start=1):
+            output_lines.append(f"{i}. Title: {result['title']}")
+            output_lines.append(f"   URL: {result['href']}")
+            if result.get("body"):
+                output_lines.append(f"   Snippet: {result['body']}")
+
+            output_lines.append("")
+
         return ToolResult.success_result(
             "\n".join(output_lines),
             metadata={
-                "path": str(search_path),
-                "matches": len(matches),
+                "results": len(results),
             },
         )
-
-    def _find_files(self, search_path: Path) -> list[Path]:
-        files = []
-
-        for root, dirs, filenames in os.walk(search_path):
-            dirs[:] = [
-                d
-                for d in dirs
-                if d not in {"node_modules", "__pycache__", ".git", ".venv", "venv"}
-            ]
-
-            for filename in filenames:
-                if filename.startswith("."):
-                    continue
-
-                file_path = Path(root) / filename
-                if not is_binary_file(file_path):
-                    files.append(file_path)
-                    if len(files) >= 500:
-                        return files
-
-        return files
