@@ -29,6 +29,29 @@ class ApprovalPolicy(str, Enum):
     NEVER = "never"
     YOLO = "yolo"
 
+class HookTrigger(str, Enum):
+    BEFORE_AGENT = "before_agent"
+    AFTER_AGENT = "after_agent"
+    BEFORE_TOOL = "before_tool"
+    AFTER_TOOL = "after_tool"
+    ON_ERROR = "on_error"
+
+
+class HookConfig(BaseModel):
+    name: str
+    trigger: HookTrigger
+    command: str | None = None  
+    script: str | None = None  
+    timeout_sec: float = 30
+    enabled: bool = True
+
+    @model_validator(mode="after")
+    def validate_hook(self) -> HookConfig:
+        if not self.command and not self.script:
+            raise ValueError("Hook must either have 'command' or 'script'")
+        return self
+
+
 
 class MCPServerConfig(BaseModel):
     enabled: bool = True
@@ -38,7 +61,6 @@ class MCPServerConfig(BaseModel):
     args: list[str] = Field(default_factory=list)
     env: dict[str, str] = Field(default_factory=dict)
     cwd: Path | None = None
-
     url: str | None = None
 
     @model_validator(mode="after")
@@ -70,6 +92,8 @@ class Config(BaseModel):
     user_instructions:str|None = None
     debug:bool = False
     approval: ApprovalPolicy = ApprovalPolicy.ON_REQUEST
+    hooks_enabled: bool = False
+    hooks: list[HookConfig] = Field(default_factory=list)
 
     @property
     def api_key(self)->str|None:

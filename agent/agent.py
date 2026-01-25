@@ -12,6 +12,7 @@ class Agent:
         self.session.approval_manager.confirmation_callback = confirmation_callback
 
     async def run(self, message:str):
+        await self.session.hook_system.trigger_before_agent(message)
         yield AgentEvent.agent_start(message)
 
         self.session.context_manager.add_user_message(message)
@@ -95,7 +96,8 @@ class Agent:
                     tool_call.name,
                     tool_call.arguments,
                     self.config.cwd,
-                    self.session.approval_manager
+                    self.session.hook_system,
+                    self.session.approval_manager,
                 )
                 
                 yield AgentEvent.tool_call_complete(
