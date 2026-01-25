@@ -1,13 +1,15 @@
 from __future__ import annotations
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Callable
 from agent.events import AgentEvent, AgentEventType
 from agent.session import Session
 from client.response import StreamEventType, ToolCall, ToolResultMessage
 from config.config import Config
+from tools.base import ToolConfirmation
 class Agent:
-    def __init__(self,config:Config):
+    def __init__(self,config:Config,confirmation_callback: Callable[[ToolConfirmation], bool] | None = None,):
         self.config = config
         self.session:Session|None = Session(config=self.config)
+        self.session.approval_manager.confirmation_callback = confirmation_callback
 
     async def run(self, message:str):
         yield AgentEvent.agent_start(message)
@@ -74,7 +76,11 @@ class Agent:
             )
 
             if not tool_calls:
-                yield AgentEvent.text_complete(response_text)
+                if usage:
+                    self.session.context_manager.set_latest_usage(usage)
+                    self.session.context_manager.add_usage(usage)
+
+                self.session.context_manager.prune_tool_outputs()
                 return
             
             tool_call_results:list[ToolResultMessage] = []
@@ -88,7 +94,8 @@ class Agent:
                 result = await self.session.tool_registry.invoke(
                     tool_call.name,
                     tool_call.arguments,
-                    self.config.cwd
+                    self.config.cwd,
+                    self.session.approval_manager
                 )
                 
                 yield AgentEvent.tool_call_complete(
@@ -110,6 +117,13 @@ class Agent:
                     tool_result.tool_call_id,
                     tool_result.content
                 )
+            
+            if usage:
+                self.session.context_manager.set_latest_usage(usage)
+                self.session.context_manager.add_usage(usage)
+
+            self.session.context_manager.prune_tool_outputs()
+        yield AgentEvent.agent_error(f"Maximum turns ({max_turns}) reached")
             
     async def __aenter__(self)->Agent:
             await self.session.initialize()

@@ -4,7 +4,7 @@ import os
 from pathlib import Path
 import sys
 from pydantic import BaseModel, Field
-from tools.base import Tool, ToolInvocation, ToolKind, ToolResult
+from tools.base import Tool, ToolConfirmation, ToolInvocation, ToolKind, ToolResult
 
 
 BLOCKED_COMMANDS = {
@@ -39,6 +39,30 @@ class ShellTool(Tool):
     description = "Execute shell commands. Use this tool to run commands in the system shell."
 
     schema = ShellParams
+
+
+    async def get_confirmation(
+        self, invocation: ToolInvocation
+    ) -> ToolConfirmation | None:
+        params = ShellParams(**invocation.params)
+
+        for blocked in BLOCKED_COMMANDS:
+            if blocked in params.command:
+                return ToolConfirmation(
+                    tool_name=self.name,
+                    params=invocation.params,
+                    description=f"Execute (BLOCKED): {params.command}",
+                    command=params.command,
+                    is_dangerous=True,
+                )
+
+        return ToolConfirmation(
+            tool_name=self.name,
+            params=invocation.params,
+            description=f"Execute: {params.command}",
+            command=params.command,
+            is_dangerous=False,
+        )
 
     async def execute(self, invocation:ToolInvocation) -> ToolResult:
         params  = ShellParams(**invocation.params) 

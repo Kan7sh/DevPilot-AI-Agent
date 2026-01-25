@@ -1,4 +1,5 @@
 from __future__ import annotations
+from enum import Enum
 import os
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,14 @@ class ShellEnvironmentPolicy(BaseModel):
         ]
     )
     set_vars:dict[str,str] = Field(default_factory=dict)
+
+class ApprovalPolicy(str, Enum):
+    ON_REQUEST = "on-request"
+    ON_FAILURE = "on-failure"
+    AUTO = "auto"
+    AUTO_EDIT = "auto-edut"
+    NEVER = "never"
+    YOLO = "yolo"
 
 
 class MCPServerConfig(BaseModel):
@@ -60,6 +69,7 @@ class Config(BaseModel):
     developer_instructions:str|None = None
     user_instructions:str|None = None
     debug:bool = False
+    approval: ApprovalPolicy = ApprovalPolicy.ON_REQUEST
 
     @property
     def api_key(self)->str|None:
