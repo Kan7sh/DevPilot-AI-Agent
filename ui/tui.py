@@ -80,6 +80,7 @@ class TUI:
             "shell":["command","timeout","cwd",],
             "list_dir":["path","include_hidden"],
             "grep":["path","case_sensitive","pattern"],
+            "glob":["path","pattern"],
         }
 
 
@@ -339,6 +340,21 @@ class TUI:
             if summary:
                 blocks.append(Text(" • ".join(summary),style="muted"))
 
+            output_display = truncate_text(output,self.config.model.name,self._max_block_tokens)
+            blocks.append(
+                Syntax(
+                    output_display,
+                    "text",
+                    theme="monokai",
+                    word_wrap=True
+                )
+            )
+        elif name == "glob" and success:
+            matches = metadata.get("matches")
+
+            if isinstance(matches,int):
+                blocks.append(Text(f"{matches} matches",style="muted"))
+                
             output_display = truncate_text(output,self.config.model.name,self._max_block_tokens)
             blocks.append(
                 Syntax(
