@@ -73,6 +73,10 @@ class ContextManager:
 
         self._messages.append(item)
 
+    @property
+    def message_count(self) -> int:
+        return len(self._messages)
+
     def get_messages(self)->list[dict[str,Any]]:
         messages  = []
         if self._system_prompt:

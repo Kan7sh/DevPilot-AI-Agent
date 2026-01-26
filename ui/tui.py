@@ -10,6 +10,7 @@ from rich import box
 from rich.console import Group
 from rich.syntax import Syntax
 from rich.prompt import Prompt
+from rich.markdown import Markdown
 
 import re
 from config.config import Config
@@ -537,3 +538,32 @@ class TUI:
         )
 
         return response.lower() in {"y", "yes"}
+    
+
+    def show_help(self) -> None:
+        help_text = """
+## Commands
+
+- `/help` - Show this help
+- `/exit` or `/quit` - Exit the agent
+- `/clear` - Clear conversation history
+- `/config` - Show current configuration
+- `/model <name>` - Change the model
+- `/approval <mode>` - Change approval mode
+- `/stats` - Show session statistics
+- `/tools` - List available tools
+- `/mcp` - Show MCP server status
+- `/save` - Save current session
+- `/checkpoint [name]` - Create a checkpoint
+- `/checkpoints` - List available checkpoints
+- `/restore <checkpoint_id>` - Restore a checkpoint
+- `/sessions` - List saved sessions
+- `/resume <session_id>` - Resume a saved session
+
+## Tips
+
+- Just type your message to chat with the agent
+- The agent can read, write, and execute code
+- Some operations require approval (can be configured)
+"""
+        self.console.print(Markdown(help_text))
