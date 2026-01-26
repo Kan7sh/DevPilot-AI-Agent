@@ -11,6 +11,7 @@ from safety.approval import ApprovalManager
 from tools.discovery import ToolDiscoveryManager
 from tools.mcp.mcp_manager import MCPManager
 from tools.registry import create_default_registry
+from context.loop_detector import LoopDetector
 
 
 class Session:
@@ -34,6 +35,7 @@ class Session:
         self.updated_at = datetime.now()  
         self.mcp_manager = MCPManager(self.config)
         self.chat_compactor = ChatCompactor(self.client)
+        self.loop_detector = LoopDetector()
 
         self._turn_count = 0
 
